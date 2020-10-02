@@ -1,0 +1,90 @@
+---
+title: "Activity project 1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(knitr)
+library(caret)
+
+```
+
+Importing data
+
+```{r}
+data <- read.csv("activity.csv")
+dim(data)
+head(data)
+```
+
+## Steps taken per day
+
+```{r}
+steps <- data %>% 
+  group_by(date) %>% 
+  summarise(steps_per_day = sum(steps))
+
+head(kable(steps),10)
+```
+
+## Histogram of number of steps taken per day
+```{r}
+hist(steps$steps_per_day, breaks = 5, col = "orange",
+     xlab = "Steps taken per day", main = "Histogram of steps taken per day")
+```
+
+
+## Mean and Median steps taken per day
+```{r}
+Mean <- mean(steps$steps_per_day, na.rm = TRUE)
+Median <- median(steps$steps_per_day, na.rm = TRUE)
+```
+
+### `r round(Mean,0)` is the mean number of steps taken per day and `r Median` is the median number of steps taken per day  
+  
+  
+## Time series plot
+
+```{r}
+data$date <- as.Date(data$date)
+
+data %>% 
+  group_by(date) %>% 
+  summarise(steps_per_day = mean(steps, na.rm = TRUE)) %>% 
+  filter(steps_per_day != "NA") %>% 
+  ggplot(aes(date, steps_per_day)) +
+  geom_line() +
+  theme_minimal()
+  
+```
+
+
+```{r}
+data$interval<-factor(data$interval)
+act <-aggregate(data=data,steps~date+interval,FUN="mean")
+act1 <-aggregate(data=act,steps~interval,FUN="max")
+head(kable(act1),10)
+```
+
+
+## Imputing Missing data
+```{r}
+Imputed <- caret::preProcess(data, "medianImpute")
+imputed_data <- predict(Imputed, data)
+```
+
+## Histogram after Imputation
+
+```{r}
+Im_data <- imputed_data %>% 
+  group_by(date) %>% 
+  summarise(steps = sum(steps))
+
+hist(Im_data$steps, breaks = 5, col = "orange",
+     xlab = "Steps taken per day", main = "Histogram of steps taken per day")
+
+```
+
